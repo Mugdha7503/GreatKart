@@ -30,6 +30,8 @@ variation_category_choice=(
     ('color','color'),
     ('size','size'),
 )
+
+
 class Variation(models.Model):
     product = models.ForeignKey(Product,on_delete=models.CASCADE)
     variation_category = models.CharField(max_length=100,choices=variation_category_choice)
@@ -41,4 +43,5 @@ class Variation(models.Model):
 
 
     def __str__(self):
-        return (self.variation_value)
+        return f"{self.variation_category}: {self.variation_value}"
+

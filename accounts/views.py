@@ -10,7 +10,8 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 from carts.models import Cart,CartItem
-from carts.views import _cart_id
+from carts.views import _cart_id 
+from .models import Account
 
 def register(request):
     if request.method == 'POST':
@@ -31,7 +32,7 @@ def register(request):
             mail_subject = "Please activate your account"
             message = render_to_string('accounts/verify_email.html',{
                 'user':user,
-                'domain':current_site,
+                'domain':current_site.domain,  # <-- changed from current_site to current_site.domain
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': default_token_generator.make_token(user),
 
@@ -103,9 +104,12 @@ def activate(request, uidb64, token):
         return redirect('register')    
 
 @login_required(login_url='login')
-
 def dashboard(request):
-    return render(request,'accounts/dashboard.html')
+    current_site = get_current_site(request)
+    context = {
+        'domain': current_site.domain,  # <-- add this line
+    }
+    return render(request, 'accounts/dashboard.html', context)
 
 def forgotpassword(request):
     if request.method == 'POST':
@@ -117,7 +121,7 @@ def forgotpassword(request):
             mail_subject = "Reset your Password"
             message = render_to_string('accounts/reset_email.html',{
                 'user':user,
-                'domain':current_site,
+                'domain':current_site.domain,  # <-- changed from current_site to current_site.domain
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': default_token_generator.make_token(user),
 
@@ -164,6 +168,61 @@ def resetpassword(request):
             messages.error(request, 'Password does not match')
             return redirect('resetpassword')
     else:
-        return render(request,'accounts/resetpassword.html') 
+        return render(request,'accounts/resetpassword.html')
+    
+# Register
+# @api_view(['POST'])
+# @permission_classes([AllowAny])
+# def register_web(request):
+#     serializer = RegisterSerializer(data=request.data)
+#     if serializer.is_valid():
+#         user = serializer.save()
+#         token, _ = Token.objects.get_or_create(user=user)
+#         return Response({'token': token.key})
+#     return Response(serializer.errors, status=400)
+
+# # Login
+# @api_view(['POST'])
+# @permission_classes([AllowAny])
+# def login_web(request):
+#     from django.contrib.auth import authenticate
+#     from django.db.models import Q
+#     from .models import Account
+
+#     identifier = (request.data.get('username') or request.data.get('email') or '').strip()
+#     password = (request.data.get('password') or '').strip()
+
+#     if not identifier or not password:
+#         return Response({'error': 'username/email and password are required'}, status=400)
+
+#     # Resolve identifier to the custom user model's credential field (email)
+#     resolved_email = None
+#     try:
+#         # Try to find by username first; if identifier is an email, the username filter will not match
+#         user_obj = Account.objects.filter(Q(username__iexact=identifier) | Q(email__iexact=identifier)).first()
+#         if user_obj:
+#             resolved_email = user_obj.email
+#     except Exception:
+#         resolved_email = None
+
+#     if not resolved_email:
+#         return Response({'error': 'Invalid Credentials'}, status=400)
+
+#     user = authenticate(email=resolved_email, password=password)
+#     if user:
+#         token, _ = Token.objects.get_or_create(user=user)
+#         return Response({'token': token.key})
+#     return Response({'error': 'Invalid Credentials'}, status=400)
+
+# # Protected Route
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def profile_web(request):
+#     return Response({'user': request.user.username, 'email': request.user.email})
 
 
+
+
+ 
+
+    

@@ -5,8 +5,10 @@ from carts.views import _cart_id
 from carts.models import CartItem
 from django.db.models import Q
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.contrib.sites.shortcuts import get_current_site
 
 def store(request, category_slug=None):
+    current_site = get_current_site(request)
     categories = None
     products = None
     
@@ -27,6 +29,7 @@ def store(request, category_slug=None):
     context={
         'products':paged_products,
         'product_count': product_count,
+        'domain': current_site.domain,
     }
     return render(request,'store/store.html', context)
 
