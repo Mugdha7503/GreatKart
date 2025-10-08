@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser,BaseUserManager
 
 
 class MyAccountManager(BaseUserManager):
-    def create_user(self, first_name, last_name, username,phone_num, email, password= None):
+    def create_user(self, first_name, last_name, username,phone_number, email, password= None):
         if not email:
             raise ValueError('enter valid email address')
         if not username:
@@ -13,21 +13,21 @@ class MyAccountManager(BaseUserManager):
             username= username,
             first_name= first_name,
             last_name=last_name,
-            phone_num=phone_num,
+            phone_number=phone_number,
         )
 
         user.set_password(password)
         user.save(using=self._db)
         return user
     
-    def create_superuser(self, first_name, last_name, username, email, password,phone_num):
+    def create_superuser(self, first_name, last_name, username, email, password,phone_number):
         user= self.create_user(
             email= self. normalize_email(email),
             username= username,
             password=password,
             first_name= first_name,
             last_name=last_name,
-            phone_num=phone_num,
+            phone_number=phone_number,
         )
         user.is_admin= True
         user.is_active=True
@@ -41,7 +41,7 @@ class Account(AbstractBaseUser):
     last_name= models.CharField(max_length=50)
     username= models.CharField(max_length=50, unique=True)
     email= models.EmailField(max_length=50, unique= True)
-    phone_num= models.CharField(max_length= 50)
+    phone_number= models.CharField(max_length= 50)
 
     date_joined= models.DateTimeField(auto_now_add=True)
     last_login= models.DateTimeField(auto_now_add=True)

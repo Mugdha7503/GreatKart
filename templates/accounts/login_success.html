@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<script>
+    localStorage.setItem("access", "{{ access }}");
+    localStorage.setItem("refresh", "{{ refresh }}");
+    console.log("✅ JWT tokens saved to localStorage");
+
+    // Redirect after storing JWT
+    window.location.href = "{% url 'dashboard' %}";
+</script>
+{% endblock %}

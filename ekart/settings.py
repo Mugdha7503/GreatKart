@@ -45,6 +45,9 @@ INSTALLED_APPS = [
     'orders',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+    'api',
+    'notifications',
     # 'rest_framework.authtoken',
 ]
 
@@ -63,6 +66,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
 }
 
 
@@ -174,4 +185,11 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'mugdhaupadhyay0705@gmail.com'
 EMAIL_HOST_PASSWORD = 'vlre hsjl vvdt zkqw'
 EMAIL_USE_TLS= True
+
+# Celery & Redis settings
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 

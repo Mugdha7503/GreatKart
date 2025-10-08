@@ -73,7 +73,13 @@
 						<small class="title text-muted">Welcome {{user.first_name}}!</small>
 						<div> 
 							<a href="{% url 'dashboard' %}">Dashboard</a> <span class="dark-transp"> | </span>
-							<a href="{% url 'logout' %}">Logout</a>
+							<a href="{% url 'logout' %}" onclick="
+			localStorage.removeItem('access');
+			localStorage.removeItem('refresh');
+			console.log('✅ JWT tokens cleared from localStorage');">
+			Logout
+		</a>
+
 						</div>
 					 </div>
 					{% endif %}
@@ -89,3 +95,15 @@
 
 
 </header>
+<script>
+    // Protect all private pages
+    const protectedPages = ["/dashboard", "/my_orders", "/edit_profile"];
+
+    if (protectedPages.some(path => window.location.pathname.includes(path))) {
+        const token = localStorage.getItem("access");
+        if (!token) {
+            alert("Please log in first!");
+            window.location.href = "{% url 'login' %}";
+        }
+    }
+</script>

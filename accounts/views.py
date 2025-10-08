@@ -7,11 +7,15 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
 from django.utils.encoding import force_bytes
+from django.contrib.auth import login as django_login
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
 from carts.models import Cart,CartItem
 from carts.views import _cart_id 
 from .models import Account
+from django.http import JsonResponse
+from rest_framework_simplejwt.tokens import RefreshToken
+import requests
 
 def register(request):
     if request.method == 'POST':
@@ -19,12 +23,12 @@ def register(request):
         if form.is_valid():
             first_name = form.cleaned_data['first_name'] #fetch the value from the request
             last_name = form.cleaned_data['last_name']
-            phone_num = form.cleaned_data['phone_num']
+            phone_number = form.cleaned_data['phone_number']
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
             username = email.split('@')[0]
-            user = Account.objects.create_user(first_name=first_name, last_name=last_name,phone_num=phone_num,username=username,password=password,email=email)
-            user.phone_num = phone_num
+            user = Account.objects.create_user(first_name=first_name, last_name=last_name,phone_number=phone_number,username=username,password=password,email=email)
+            user.phone_number = phone_number
             user.save()
 
             #USER ACTIVATION
@@ -71,12 +75,30 @@ def login(request):
             except: #if there is no item
                 pass
 
-            auth.login(request, user)
-            messages.success(request, 'You have logged in!')
-            return redirect('dashboard')
+            django_login(request, user)
+
+            # --- generate JWT tokens ---
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+
+            #return JSON with redirect URL 
+            return JsonResponse({
+                "success": True,
+                "access": access_token,
+                "refresh": refresh_token,
+                "redirect_url": "/accounts/dashboard/"
+            })
+
         else:
-            messages.error(request, 'Invalid login Credentials')
-            return redirect('login')
+            return JsonResponse({"success": False, "error": "Invalid credentials"}, status=401)
+
+        #     auth.login(request, user)
+        #     messages.success(request, 'You have logged in!')
+        #     return redirect('dashboard')
+        # else:
+        #     messages.error(request, 'Invalid login Credentials')
+            # return redirect('login')
     
     return render(request,'accounts/login.html')
 
@@ -84,7 +106,11 @@ def login(request):
 
 def logout(request):
     auth.logout(request)
+    request.session.flush()  # clear Django session
     messages.success(request, "You have logged out successfully")
+    response = redirect('login')
+    response.delete_cookie('access')
+    response.delete_cookie('refresh')
     return redirect('login')
 
 def activate(request, uidb64, token):
@@ -170,6 +196,13 @@ def resetpassword(request):
     else:
         return render(request,'accounts/resetpassword.html')
     
+def jwt_login_page(request):
+    return render(request, 'accounts/jwt_login.html')
+
+def jwt_dashboard_page(request):
+    return render(request, 'accounts/jwt_dashboard.html')
+
+
 # Register
 # @api_view(['POST'])
 # @permission_classes([AllowAny])
