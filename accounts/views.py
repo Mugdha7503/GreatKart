@@ -133,7 +133,7 @@ def activate(request, uidb64, token):
 def dashboard(request):
     current_site = get_current_site(request)
     context = {
-        'domain': current_site.domain,  # <-- add this line
+        'domain': current_site.domain,  
     }
     return render(request, 'accounts/dashboard.html', context)
 
