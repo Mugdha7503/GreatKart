@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404,redirect
 from .models import Product
 from category.models import Category
 from carts.views import _cart_id
@@ -6,6 +6,10 @@ from carts.models import CartItem
 from django.db.models import Q
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.contrib.sites.shortcuts import get_current_site
+from django.contrib.auth.decorators import login_required
+from accounts.decorators import seller_required
+from .models import Product
+from .forms import ProductForm
 
 def store(request, category_slug=None):
     current_site = get_current_site(request)
@@ -61,3 +65,63 @@ def search(request):
     }
     return render(request,'store/store.html',context)
 
+
+
+
+@login_required
+def choose_role(request):
+    if request.user.is_superadmin:
+        # Superadmin sees both buttons
+        return render(request, 'store/choose_role.html')
+
+    if request.user.is_seller():
+        return redirect('seller_dashboard')
+
+    return redirect('buyer_home')
+
+@login_required
+@seller_required
+def seller_dashboard(request):
+    products = Product.objects.filter(seller=request.user)
+    return render(request, 'store/seller_dashboard.html', {'products': products})
+
+@login_required
+def buyer_home(request):
+    products = Product.objects.filter(seller=request.user)
+    return render(request, 'store/buyer_home.html', {'products': products})
+
+
+@login_required
+@seller_required
+def add_product(request):
+    if request.method == 'POST':
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.seller = request.user
+            product.save()
+            return redirect('seller_dashboard')
+    else:
+        form = ProductForm()
+    return render(request, 'store/add_product.html', {'form': form})
+
+
+@login_required
+@seller_required
+def edit_product(request, pk):
+    product = get_object_or_404(Product, pk=pk, seller=request.user)
+    form = ProductForm(request.POST or None, request.FILES or None, instance=product)
+    if form.is_valid():
+        form.save()
+        return redirect('seller_dashboard')
+    return render(request, 'store/edit_product.html', {'form': form})
+
+
+@login_required
+@seller_required
+def delete_product(request, pk):
+    product = get_object_or_404(Product, pk=pk, seller=request.user)
+    if request.method == 'POST':
+        product.delete()
+        return redirect('seller_dashboard')
+    return render(request, 'store/delete_product.html', {'product': product})

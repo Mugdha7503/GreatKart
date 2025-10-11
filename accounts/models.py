@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser,BaseUserManager
 
 
 class MyAccountManager(BaseUserManager):
-    def create_user(self, first_name, last_name, username,phone_number, email, password= None):
+    def create_user(self, first_name, last_name, username,phone_number, email, password= None,role='buyer'):
         if not email:
             raise ValueError('enter valid email address')
         if not username:
@@ -14,13 +14,14 @@ class MyAccountManager(BaseUserManager):
             first_name= first_name,
             last_name=last_name,
             phone_number=phone_number,
+            role=role,
         )
 
         user.set_password(password)
         user.save(using=self._db)
         return user
     
-    def create_superuser(self, first_name, last_name, username, email, password,phone_number):
+    def create_superuser(self, first_name, last_name, username, email, password,phone_number=None):
         user= self.create_user(
             email= self. normalize_email(email),
             username= username,
@@ -28,6 +29,7 @@ class MyAccountManager(BaseUserManager):
             first_name= first_name,
             last_name=last_name,
             phone_number=phone_number,
+            role='seller',
         )
         user.is_admin= True
         user.is_active=True
@@ -37,17 +39,23 @@ class MyAccountManager(BaseUserManager):
         return user
 
 class Account(AbstractBaseUser):
+    ROLE_CHOICES = (
+        ('buyer', 'Buyer'),
+        ('seller', 'Seller'),
+    )
+     
     first_name= models.CharField(max_length= 50)
     last_name= models.CharField(max_length=50)
     username= models.CharField(max_length=50, unique=True)
     email= models.EmailField(max_length=50, unique= True)
-    phone_number= models.CharField(max_length= 50)
+    phone_number= models.CharField(max_length= 50, null= True, blank= True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='buyer')
 
     date_joined= models.DateTimeField(auto_now_add=True)
     last_login= models.DateTimeField(auto_now_add=True)
     is_admin= models.BooleanField(default= False)
     is_staff= models.BooleanField(default= False)
-    is_active= models.BooleanField(default= False)
+    is_active= models.BooleanField(default= True)
     is_superadmin= models.BooleanField(default= False)
 
     USERNAME_FIELD='email'
@@ -63,4 +71,10 @@ class Account(AbstractBaseUser):
     
     def has_module_perms(self, add_label):
         return True 
+    
+    def is_seller(self):
+        return self.role == 'seller'
+
+    def is_buyer(self):
+        return self.role == 'buyer'
     

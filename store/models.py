@@ -1,8 +1,10 @@
 from django.db import models
 from category.models import Category
 from django.urls import reverse
+from accounts.models import Account
 
 class Product(models.Model):
+    seller = models.ForeignKey(Account, on_delete=models.CASCADE, limit_choices_to={'role': 'seller'}, null=True)
     product_name = models.CharField(max_length=200, unique=True)
     slug = models.SlugField(max_length= 200, unique= True)
     desc = models.TextField(max_length=200,blank=True)

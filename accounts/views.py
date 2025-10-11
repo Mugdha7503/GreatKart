@@ -15,6 +15,7 @@ from carts.views import _cart_id
 from .models import Account
 from django.http import JsonResponse
 from rest_framework_simplejwt.tokens import RefreshToken
+from store.models import Product
 import requests
 
 def register(request):
@@ -26,9 +27,9 @@ def register(request):
             phone_number = form.cleaned_data['phone_number']
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
+
             username = email.split('@')[0]
             user = Account.objects.create_user(first_name=first_name, last_name=last_name,phone_number=phone_number,username=username,password=password,email=email)
-            user.phone_number = phone_number
             user.save()
 
             #USER ACTIVATION
@@ -57,9 +58,11 @@ def register(request):
 def login(request):
     if request.method == 'POST':
         email = request.POST['email']
-        password = request.POST['password']
-
+        password = request.POST['password'] 
+        
         user = auth.authenticate(email=email,password=password)
+
+    
 
         if user is not None:
             try:
@@ -75,6 +78,12 @@ def login(request):
             except: #if there is no item
                 pass
 
+            if user.role == 'seller':
+                redirect_url = '/store/seller_dashboard/'
+            else:
+                redirect_url = '/store/buyer_home/'
+
+
             django_login(request, user)
 
             # --- generate JWT tokens ---
@@ -82,16 +91,21 @@ def login(request):
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
 
+          
+
             #return JSON with redirect URL 
             return JsonResponse({
                 "success": True,
                 "access": access_token,
                 "refresh": refresh_token,
-                "redirect_url": "/accounts/dashboard/"
+                "redirect_url": redirect_url,
+               
+
             })
 
         else:
             return JsonResponse({"success": False, "error": "Invalid credentials"}, status=401)
+        
 
         #     auth.login(request, user)
         #     messages.success(request, 'You have logged in!')
@@ -196,11 +210,14 @@ def resetpassword(request):
     else:
         return render(request,'accounts/resetpassword.html')
     
-def jwt_login_page(request):
-    return render(request, 'accounts/jwt_login.html')
+@login_required
+def seller_dashboard(request):
+    return render(request, 'store/seller_dashboard.html')
 
-def jwt_dashboard_page(request):
-    return render(request, 'accounts/jwt_dashboard.html')
+@login_required
+def buyer_home(request):
+    products = Product.objects.all()
+    return render(request, 'store/buyer_home.html',{'products': products})
 
 
 # Register

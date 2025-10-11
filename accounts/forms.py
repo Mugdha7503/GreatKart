@@ -10,9 +10,10 @@ class RegistrationForm(forms.ModelForm):
          'placeholder':'Confirm password',
          'class':'form-control',
     }))
+    role = forms.ChoiceField(choices=Account.ROLE_CHOICES)
     class Meta:
          model = Account
-         fields = ['first_name', 'last_name', 'password', 'email','phone_number']
+         fields = ['first_name', 'last_name', 'password', 'email','phone_number','role']
     
     def __init__(self, *args, **kwargs):
          super(RegistrationForm, self).__init__(*args, **kwargs)
