@@ -7,7 +7,7 @@ from django.db.models import Q
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.contrib.sites.shortcuts import get_current_site
 from django.contrib.auth.decorators import login_required
-from accounts.decorators import seller_required
+from accounts.decorators import seller_required,buyer_required
 from .models import Product
 from .forms import ProductForm
 
@@ -66,18 +66,17 @@ def search(request):
     return render(request,'store/store.html',context)
 
 
-
-
 @login_required
-def choose_role(request):
-    if request.user.is_superadmin:
-        # Superadmin sees both buttons
-        return render(request, 'store/choose_role.html')
+def store_home(request):
+    user = request.user
 
-    if request.user.is_seller():
+    if user.role == 'seller':
         return redirect('seller_dashboard')
+    elif user.role == 'buyer':
+        return redirect('buyer_home')
+    else:
+        return redirect('buyer_home')
 
-    return redirect('buyer_home')
 
 @login_required
 @seller_required
@@ -86,9 +85,11 @@ def seller_dashboard(request):
     return render(request, 'store/seller_dashboard.html', {'products': products})
 
 @login_required
+@buyer_required
 def buyer_home(request):
-    products = Product.objects.filter(seller=request.user)
+    products = Product.objects.filter(is_available=True)  # show all products added by sellers
     return render(request, 'store/buyer_home.html', {'products': products})
+
 
 
 @login_required

@@ -27,9 +27,10 @@ def register(request):
             phone_number = form.cleaned_data['phone_number']
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
+            role= form.cleaned_data['role']
 
             username = email.split('@')[0]
-            user = Account.objects.create_user(first_name=first_name, last_name=last_name,phone_number=phone_number,username=username,password=password,email=email)
+            user = Account.objects.create_user(first_name=first_name, last_name=last_name,phone_number=phone_number,username=username,password=password,email=email,role=role)
             user.save()
 
             #USER ACTIVATION
@@ -79,10 +80,10 @@ def login(request):
                 pass
 
             if user.role == 'seller':
-                redirect_url = '/store/seller_dashboard/'
+                redirect_url = '/store/seller_dashboard'
             else:
-                redirect_url = '/store/buyer_home/'
-
+                redirect_url = '/store/buyer_home'
+          
 
             django_login(request, user)
 
@@ -98,7 +99,7 @@ def login(request):
                 "success": True,
                 "access": access_token,
                 "refresh": refresh_token,
-                "redirect_url": redirect_url,
+                "redirect_url": redirect_url ,
                
 
             })
